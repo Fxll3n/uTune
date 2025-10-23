@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import AVFoundation
+import UniformTypeIdentifiers
 
 @main
-struct uTuneApp: App {
+struct uTune: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
