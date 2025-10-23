@@ -10,7 +10,7 @@ import AVFoundation
 import UniformTypeIdentifiers
 
 @main
-struct uTune: App {
+struct uTuneApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
