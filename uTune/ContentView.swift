@@ -7,9 +7,12 @@
 
 import SwiftUI
 import AVFoundation
+import SwiftData
 
 struct ContentView: View {
-    @State private var songs: [Song] = []
+    @Environment(\.modelContext) var context
+    
+    @Query var songs: [Song] = []
     @State private var showingImporter = false
     @State private var player: AVAudioPlayer?
     @State private var currentSong: Song?
@@ -28,6 +31,8 @@ struct ContentView: View {
                             VStack(alignment: .leading) {
                                 Text(song.name)
                                     .font(.headline)
+                                Text(song.artist)
+                                    .font(.caption2)
                                 Text(formatTime(song.duration))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -59,6 +64,7 @@ struct ContentView: View {
             ) { result in
                 switch result {
                 case .success(let urls):
+                    print("Imported URLs:", urls)
                     importSongs(from: urls)
                 case .failure(let err):
                     errorMessage = err.localizedDescription
@@ -78,15 +84,24 @@ struct ContentView: View {
                 let asset = AVURLAsset(url: url)
                 let duration = CMTimeGetSeconds(asset.duration)
                 let name = url.deletingPathExtension().lastPathComponent
-                let song = Song(url: url, name: name, duration: duration)
+                let metadata = asset.metadata
+                let artist = metadata.first(where: { $0.commonKey?.rawValue == "artist" })?.stringValue ?? "Unknown Artist"
+                let song = Song(url: url, name: name, artist: artist, duration: duration)
                 if !songs.contains(where: { $0.url == url }) {
-                    songs.append(song)
+                    context.insert(song)
                 }
             } catch {
                 errorMessage = error.localizedDescription
             }
         }
+
+        do {
+            try context.save()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
+
 
     func play(_ song: Song) {
         do {
@@ -105,8 +120,10 @@ struct ContentView: View {
         }
     }
 
-    func delete(at offsets: IndexSet) {
-        songs.remove(atOffsets: offsets)
+    func delete(offsets: IndexSet) {
+        for index in offsets {
+            context.delete(songs[index])
+        }
     }
 
     func formatTime(_ time: TimeInterval) -> String {

@@ -6,10 +6,21 @@
 //
 
 import Foundation
+import SwiftData
 
-struct Song: Identifiable {
-    let id = UUID()
-    let url: URL
-    let name: String
-    let duration: TimeInterval
+@Model
+class Song: Identifiable {
+    var id = UUID()
+    var url: URL
+    var name: String
+    var artist: String
+    var duration: TimeInterval
+    
+    init(id: UUID = UUID(), url: URL, name: String, artist: String, duration: TimeInterval) {
+        self.id = id
+        self.url = url
+        self.name = name
+        self.artist = artist
+        self.duration = duration
+    }
 }

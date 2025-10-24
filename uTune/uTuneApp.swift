@@ -8,6 +8,7 @@
 import SwiftUI
 import AVFoundation
 import UniformTypeIdentifiers
+import SwiftData
 
 @main
 struct uTuneApp: App {
@@ -15,5 +16,7 @@ struct uTuneApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: Song.self)
+        
     }
 }
