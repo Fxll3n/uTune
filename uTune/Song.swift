@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 import SwiftData
 
 @Model
@@ -24,3 +25,4 @@ class Song: Identifiable {
         self.duration = duration
     }
 }
+

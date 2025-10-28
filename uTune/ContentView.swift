@@ -7,16 +7,15 @@
 
 import SwiftUI
 import AVFoundation
+import UIKit
 import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) var context
+    @Environment(Player.self) var player
     
     @Query var songs: [Song] = []
     @State private var showingImporter = false
-    @State private var player: AVAudioPlayer?
-    @State private var currentSong: Song?
-    @State private var isPlaying = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -28,17 +27,19 @@ struct ContentView: View {
                 } else {
                     ForEach(songs) { song in
                         HStack {
-                            VStack(alignment: .leading) {
-                                Text(song.name)
-                                    .font(.headline)
-                                Text(song.artist)
-                                    .font(.caption2)
-                                Text(formatTime(song.duration))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(song.name)
+                                        .font(.headline)
+                                    Text(song.artist)
+                                        .font(.caption2)
+                                    Text(formatTime(song.duration))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                             Spacer()
-                            if currentSong?.id == song.id && isPlaying {
+                            if player.currentTrack == song && player.isPlaying {
                                 Image(systemName: "waveform.circle.fill")
                                     .foregroundColor(.green)
                             }
@@ -77,6 +78,7 @@ struct ContentView: View {
             }
         }
     }
+    
 
     func importSongs(from urls: [URL]) {
         for url in urls {
@@ -105,16 +107,12 @@ struct ContentView: View {
 
     func play(_ song: Song) {
         do {
-            if currentSong?.id == song.id && isPlaying {
-                player?.pause()
-                isPlaying = false
+            if player.currentTrack == song && player.isPlaying {
+                player.pause()
+                player.isPlaying = false
                 return
             }
-            player = try AVAudioPlayer(contentsOf: song.url)
-            player?.prepareToPlay()
-            player?.play()
-            currentSong = song
-            isPlaying = true
+            player.play(song: song)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -122,6 +120,10 @@ struct ContentView: View {
 
     func delete(offsets: IndexSet) {
         for index in offsets {
+            if player.currentTrack == songs[index] {
+                player.pause()
+                player.currentTrack = nil
+            }
             context.delete(songs[index])
         }
     }

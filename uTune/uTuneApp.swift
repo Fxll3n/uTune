@@ -14,7 +14,10 @@ import SwiftData
 struct uTuneApp: App {
     var body: some Scene {
         WindowGroup {
+            @State var player: Player = Player()
+            
             ContentView()
+                .environment(player)
         }
         .modelContainer(for: Song.self)
         
