@@ -81,28 +81,38 @@ struct ContentView: View {
     
 
     func importSongs(from urls: [URL]) {
+        let fileManager = FileManager.default
+        let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        
         for url in urls {
+            guard url.startAccessingSecurityScopedResource() else { continue }
+            defer { url.stopAccessingSecurityScopedResource() }
+            
             do {
-                let asset = AVURLAsset(url: url)
+                let dest = documents.appendingPathComponent(url.lastPathComponent)
+                
+                if !fileManager.fileExists(atPath: dest.path) {
+                    try fileManager.copyItem(at: url, to: dest)
+                }
+                
+                let asset = AVURLAsset(url: dest)
                 let duration = CMTimeGetSeconds(asset.duration)
-                let name = url.deletingPathExtension().lastPathComponent
-                let metadata = asset.metadata
-                let artist = metadata.first(where: { $0.commonKey?.rawValue == "artist" })?.stringValue ?? "Unknown Artist"
-                let song = Song(url: url, name: name, artist: artist, duration: duration)
-                if !songs.contains(where: { $0.url == url }) {
+                let name = dest.deletingPathExtension().lastPathComponent
+                let artist = asset.commonMetadata
+                    .first(where: { $0.commonKey?.rawValue == "artist" })?.stringValue ?? "Unknown Artist"
+                
+                let song = Song(url: dest, name: name, artist: artist, duration: duration)
+                if !songs.contains(where: { $0.url == dest }) {
                     context.insert(song)
                 }
             } catch {
                 errorMessage = error.localizedDescription
             }
         }
-
-        do {
-            try context.save()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        
+        do { try context.save() } catch { errorMessage = error.localizedDescription }
     }
+
 
 
     func play(_ song: Song) {
